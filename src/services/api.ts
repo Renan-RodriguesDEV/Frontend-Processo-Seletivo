@@ -10,6 +10,42 @@ function getStoredToken() {
   return window.localStorage.getItem(TOKEN_KEY)
 }
 
+function decodeJwtPayload(token: string) {
+  const payloadPart = token.split('.')[1]
+  if (!payloadPart) return null
+
+  const normalized = payloadPart.replace(/-/g, '+').replace(/_/g, '/')
+  const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=')
+
+  try {
+    return JSON.parse(window.atob(padded)) as { exp?: number }
+  } catch {
+    return null
+  }
+}
+
+export function isTokenExpired(token: string) {
+  const payload = decodeJwtPayload(token)
+  if (!payload?.exp) return true
+  return payload.exp * 1000 <= Date.now()
+}
+
+export function getValidStoredToken() {
+  const token = getStoredToken()
+  if (!token) return null
+
+  if (isTokenExpired(token)) {
+    try {
+      window.localStorage.removeItem(TOKEN_KEY)
+    } catch (error) {
+      console.error('Failed to remove expired token from localStorage:', error)
+    }
+    return null
+  }
+
+  return token
+}
+
 function getFriendlyMessage(error: AxiosError<{ detail?: string; message?: string }>) {
   const status = error.response?.status
   const detail = error.response?.data?.detail ?? error.response?.data?.message
@@ -65,12 +101,36 @@ export const reservationsApi = axios.create({
 
 for (const api of [authApi, reservationsApi]) {
   api.interceptors.request.use((config) => {
-    const token = getStoredToken()
+    const requestPath = config.url ?? ''
+    const token = getValidStoredToken()
 
-    if (token) {
+    if (token && !(api === authApi && /\/(login|register)\/?$/.test(requestPath))) {
       config.headers.Authorization = `Bearer ${token}`
     }
 
     return config
   })
 }
+
+reservationsApi.interceptors.response.use(
+  (res) => res,
+  (error) => {
+    const status = (error as AxiosError).response?.status
+
+    if (status === 401) {
+      try {
+        window.localStorage.removeItem(TOKEN_KEY)
+      } catch (e) {
+        console.error('Failed to remove token from localStorage:', e)
+      }
+
+      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+        window.location.replace('/login')
+      }
+    }
+
+    return Promise.reject(error)
+  },
+)
+
+authApi.interceptors.response.use((res) => res, (error) => Promise.reject(error))

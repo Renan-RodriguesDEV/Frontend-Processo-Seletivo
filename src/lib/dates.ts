@@ -19,8 +19,8 @@ export function toDatetimeLocal(value?: string | null) {
 
 export function fromDatetimeLocal(value: string) {
   // `value` comes from an <input type="datetime-local" /> and has no timezone.
-  // Parse its components explicitly to avoid cross-browser Date parsing issues
-  // and produce an ISO string in UTC (Z) for server storage.
+  // Build a local datetime string without timezone so Python receives a naive
+  // datetime.datetime instead of an aware UTC value.
   if (!value) return ''
 
   const [datePart, timePart] = value.split('T')
@@ -29,8 +29,13 @@ export function fromDatetimeLocal(value: string) {
   const [year, month, day] = datePart.split('-').map((v) => Number(v))
   const [hour, minute] = timePart.split(':').map((v) => Number(v))
 
-  const dt = new Date(year, (month || 1) - 1, day || 1, hour || 0, minute || 0)
-  return dt.toISOString()
+  const normalizedYear = String(year || 0).padStart(4, '0')
+  const normalizedMonth = String(month || 1).padStart(2, '0')
+  const normalizedDay = String(day || 1).padStart(2, '0')
+  const normalizedHour = String(hour || 0).padStart(2, '0')
+  const normalizedMinute = String(minute || 0).padStart(2, '0')
+
+  return `${normalizedYear}-${normalizedMonth}-${normalizedDay}T${normalizedHour}:${normalizedMinute}:00`
 }
 
 export function formatDateTime(value: string) {

@@ -58,4 +58,7 @@ export const reservationService = {
   async deleteSelectedReservations(reservationIds: number[]) {
     await Promise.all(reservationIds.map((reservationId) => this.deleteReservation(reservationId)))
   },
+  async deleteAllReservations() {
+    await reservationsApi.delete('/reservations/')
+  }
 }

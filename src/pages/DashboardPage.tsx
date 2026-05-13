@@ -55,6 +55,7 @@ export function DashboardPage() {
   const [selectedReservationIds, setSelectedReservationIds] = useState<
     number[]
   >([]);
+  const [selectAllDelete, setSelectAllDelete] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<ToastState>(null);
@@ -282,6 +283,30 @@ export function DashboardPage() {
   }
 
   async function handleBulkDelete() {
+    // If header select-all-delete checkbox is active, delete all reservations
+    if (selectAllDelete) {
+      if (reservations.length === 0) return;
+
+      openConfirmDialog({
+        title: "Excluir todas as reservas?",
+        message: `Serão removidas todas as reservas (${reservations.length}).`,
+        confirmLabel: "Excluir todas",
+        destructive: true,
+        onConfirm: async () => {
+          try {
+            await reservationService.deleteAllReservations();
+            setSelectedReservationIds([]);
+            setSelectAllDelete(false);
+            await loadAll();
+            showToast("success", "Todas as reservas foram excluídas.");
+          } catch (caughtError) {
+            showToast("error", normalizeError(caughtError));
+          }
+        },
+      });
+      return;
+    }
+
     if (selectedReservationsCount === 0) {
       return;
     }
@@ -547,9 +572,11 @@ export function DashboardPage() {
                 type="button"
                 className="button danger"
                 onClick={handleBulkDelete}
-                disabled={selectedReservationsCount === 0}
+                disabled={selectedReservationsCount === 0 && !selectAllDelete}
               >
-                Excluir selecionadas ({selectedReservationsCount})
+                {selectAllDelete
+                  ? `Excluir todas (${reservations.length})`
+                  : `Excluir selecionadas (${selectedReservationsCount})`}
               </button>
             </div>
 
@@ -557,7 +584,14 @@ export function DashboardPage() {
               <table>
                 <thead>
                   <tr>
-                    <th />
+                    <th>
+                      <input
+                        type="checkbox"
+                        aria-label="Marcar para exclusão de todas as reservas"
+                        checked={selectAllDelete}
+                        onChange={(e) => setSelectAllDelete(e.target.checked)}
+                      />
+                    </th>
                     <th>Sala</th>
                     <th>Local</th>
                     <th>Início</th>
@@ -865,6 +899,8 @@ export function DashboardPage() {
     </main>
   );
 }
+
+export default DashboardPage;
 
 function getLocationName(locationId: number, locations: Location[]) {
   return (

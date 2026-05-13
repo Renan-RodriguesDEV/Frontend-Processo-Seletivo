@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { authService } from "../services/authService";
+import { getValidStoredToken } from "../services/api";
 
 type AuthContextValue = {
   token: string | null;
@@ -18,7 +19,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
-    const storedToken = window.localStorage.getItem(TOKEN_KEY);
+    const storedToken = getValidStoredToken();
     if (storedToken) {
       setToken(storedToken);
     }
