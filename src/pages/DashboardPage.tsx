@@ -294,7 +294,10 @@ export function DashboardPage() {
         destructive: true,
         onConfirm: async () => {
           try {
-            await reservationService.deleteAllReservations();
+            const reservationIds = reservations.map(
+              (reservation) => reservation.id,
+            );
+            await reservationService.deleteAllReservations(reservationIds);
             setSelectedReservationIds([]);
             setSelectAllDelete(false);
             await loadAll();

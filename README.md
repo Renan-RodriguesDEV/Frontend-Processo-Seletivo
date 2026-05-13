@@ -7,6 +7,10 @@ Frontend em **React + TypeScript + Vite** para o teste técnico de FullStack. Es
 
 O objetivo desta aplicação é entregar uma interface web responsiva, organizada e funcional para o fluxo completo de autenticação, cadastro, listagem, edição e exclusão de reservas.
 
+## Arquitetura e Diagramas
+
+Para uma visão visual da arquitetura, fluxo de autenticação e modelo de domínio, consulte [**DIAGRAMAS.md**](../DIAGRAMAS.md).
+
 ## Visão geral da arquitetura
 
 A solução foi desenhada para seguir a separação de responsabilidades descrita no enunciado:
@@ -59,7 +63,6 @@ Foi adicionada uma interface simples de gerenciamento de salas e locais para fac
 - **Vite**: ambiente de desenvolvimento rápido e build enxuto.
 - **React Router DOM**: gerenciamento de rotas públicas e privadas.
 - **Axios**: cliente HTTP para integração com os microsserviços.
-- **CSS puro**: controle visual direto, sem dependência de UI library, facilitando aderência ao layout pedido no teste.
 
 ## Estrutura do projeto
 
@@ -172,7 +175,7 @@ Este frontend consome as rotas de reservas, locais e salas do serviço Python, i
 - `POST /reservations/`
 - `PUT /reservations/{id}`
 - `DELETE /reservations/{id}`
-- `DELETE /reservations/` para exclusão total
+- `DELETE /reservations/batch/` para exclusão em lote
 
 Todas as requisições autenticadas enviam o JWT no header:
 
